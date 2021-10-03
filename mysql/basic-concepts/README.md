@@ -18,6 +18,13 @@ Durante instalação selecionar:
 
 <br>
 
+## Coments
+
+Fazer comentários:
+```sql
+--it is comment
+```
+
 ## Create Database
 
 Criar novo banco de dados:
@@ -29,7 +36,7 @@ CREATE DATABASE example_db;
 
 ## Drop Database
 
-Exclui um banco de dados:
+Excluir um banco de dados:
 ```sql
 DROP DATABASE example_db;
 ```
@@ -38,7 +45,7 @@ DROP DATABASE example_db;
 
 ## Use Database
 
-Seleciona um banco de dados:
+Selecionar um banco de dados:
 ```sql
 USE DATABASE example_db;
 ```
@@ -47,7 +54,7 @@ USE DATABASE example_db;
 
 ## Create Table
 
-Cria uma tabela:
+Criar uma tabela:
 ```sql
 CREATE TABLE customers_tb (
     id INT NOT NULL AUTO_INCREMENT,
@@ -72,7 +79,7 @@ ADD example_cl VARCHAR (50);
 
 ## Drop Table
 
-Apaga um tabela:
+Apagar um tabela:
 ```sql
 DROP TABLE example_tb;
 ```
@@ -97,7 +104,7 @@ CREATE TABLE sales_tb (
 
 ## Insert Into
 
-Insere dados em uma tabela:
+Inserir dados em uma tabela:
 ```sql
 INSERT INTO sales_tb (name, price, customer_id)
 VALUES ('2kg of oranges', 2.99, 1),
@@ -115,7 +122,7 @@ VALUES ('Customer_1'),
 
 ## Select
 
-Seleciona tudo da tabela *sales_tb*:
+Selecionar tudo da tabela *sales_tb*:
 ```sql
 SELECT * FROM sales_tb;
 ```
@@ -124,7 +131,7 @@ SELECT * FROM sales_tb;
 
 ## Specific Column and Limit
 
-Especifica uma coluna e limita o número de linhas:
+Especificar uma coluna e limitar o número de linhas:
 ```sql
 SELECT name FROM sales_tb LIMIT 2;
 ```
@@ -133,7 +140,7 @@ SELECT name FROM sales_tb LIMIT 2;
 
 ## As, Alias Columns
 
-Retorna a coluna com outro nome:
+Retornar a coluna com outro nome:
 ```sql
 SELECT name AS 'Product', price AS 'Price' FROM sales_tb;
 ```
@@ -142,7 +149,7 @@ SELECT name AS 'Product', price AS 'Price' FROM sales_tb;
 
 ## Order By
 
-Ordena a coluna:
+Ordenar a coluna:
 ```sql
 SELECT * FROM sales_tb ORDER BY name;
 ```
@@ -151,7 +158,7 @@ SELECT * FROM sales_tb ORDER BY name;
 
 ## Distinct Select
 
-Não retorna dados repetidos:
+Não retornar dados repetidos:
 ```sql
 SELECT DISTINCT name FROM sales_tb;
 ```
@@ -160,7 +167,7 @@ SELECT DISTINCT name FROM sales_tb;
 
 ## Update and Where
 
-Atualiza um campo seguindo uma condição:
+Atualizar um campo seguindo uma condição:
 ```sql
 UPDATE sales_tb
 SET price = 3.49
@@ -171,7 +178,7 @@ WHERE id = 1;
 
 ## Comparators
 
-Retorna tuplas onde a condição é verdadeira:
+Retornar tuplas onde a condição é verdadeira:
 ```sql
 SELECT * FROM sales_tb
 WHERE price > 4.0;
@@ -181,7 +188,7 @@ WHERE price > 4.0;
 
 ## Like String Filter
 
-Retorna se a string conter os caracteres:
+Retornar se a string conter os caracteres:
 ```sql
 SELECT * FROM sales_tb
 WHERE name LIKE '%an%';
@@ -193,7 +200,7 @@ WHERE name LIKE '%an%';
 
 ## Or and And
 
-Retorna tuplas onde a condição for verdadeira:
+Retornar tuplas onde a condição for verdadeira:
 ```sql
 SELECT * FROM sales_tb
 WHERE price = 3.99 OR name = '1kg of apples';
@@ -203,7 +210,7 @@ WHERE price = 3.99 OR name = '1kg of apples';
 
 ## Between
 
-Retorna tuplas onde o campo esta entre os valores informados:
+Retornar tuplas onde o valor do campo esteja entre os valores informados:
 ```sql
 SELECT * FROM sales_tb
 WHERE price BETWEEN 2.0 AND 3.0;
@@ -213,7 +220,7 @@ WHERE price BETWEEN 2.0 AND 3.0;
 
 ## Is Null
 
-Retorna se for igual a nulo:
+Retornar se for igual a nulo:
 ```sql
 SELECT * FROM sales_tb
 WHERE price = IS NULL;
@@ -223,7 +230,7 @@ WHERE price = IS NULL;
 
 ## Delete
 
-Deleta onde a condição for verdadeira:
+Deletar onde a condição for verdadeira:
 ```sql
 DELETE FROM sales_tb WHERE id = 1;
 ```
@@ -262,15 +269,29 @@ Entendendo os *joins*:
 
 Funções de agregação:
 ```sql
-SELECT AVG(price) FROM sales_tb;
+SELECT COUNT(example_cl) FROM sales_tb;
 SELECT SUM(price) FROM sales_tb;
 ```
+
+## Concat
+
+Concatenar strings:
+```sql
+SELECT CONCAT('hello', ' ', 'world'); --return 'hello world'
+
+--If the PIPES_AS_CONCAT SQL mode is enabled, then || will concatenate
+SELECT 'hello' || '' || 'world'; --return 'hello world'
+
+--As of MySQL 8.0.17, this operator is deprecated; expect support for it to be removed in a future version of MySQL. Exception: Deprecation does not apply if PIPES_AS_CONCAT is enabled because, in that case, || signifies string concatentation.
+```
+
+[Mais Funções](\\../agregate-functions/README.md)
 
 <br>
 
 ## Group By
 
-Usado com funções agregadas para agrupar os resultados:
+Comumente é usado com funções agregadas para agrupar os resultados:
 ```sql
 SELECT customer_id, COUNT(customer_id) FROM sales_tb
 GROUP BY customer_id;
