@@ -4,6 +4,7 @@
 Conhecimentos necessários:
 * SQL
 * Diagrama de Venn (opcional)
+* SGBD
 
 <br>
 
@@ -140,9 +141,9 @@ SELECT name FROM sales_tb LIMIT 2;
 
 ## As, Alias Columns
 
-Retornar a coluna com outro nome:
+Renomear uma coluna ou tabela temporariamente:
 ```sql
-SELECT name AS 'Product', price AS 'Price' FROM sales_tb;
+SELECT name, price FROM sales_tb AS a;
 ```
 
 <br>
@@ -169,9 +170,9 @@ SELECT DISTINCT name FROM sales_tb;
 
 Atualizar um campo seguindo uma condição:
 ```sql
-UPDATE sales_tb
-SET price = 3.49
-WHERE id = 1;
+UPDATE sales_tb AS a
+SET a.price = 3.49
+WHERE a.id = 1;
 ```
 
 <br>
@@ -180,8 +181,8 @@ WHERE id = 1;
 
 Retornar tuplas onde a condição é verdadeira:
 ```sql
-SELECT * FROM sales_tb
-WHERE price > 4.0;
+SELECT * FROM sales_tb AS a
+WHERE a.price > 4.0;
 ```
 
 <br>
@@ -190,8 +191,8 @@ WHERE price > 4.0;
 
 Retornar se a string conter os caracteres:
 ```sql
-SELECT * FROM sales_tb
-WHERE name LIKE '%an%';
+SELECT * FROM sales_tb AS a
+WHERE a.name LIKE '%an%';
 --may contain characters to the left -> %an
 --an% <- may contain characters to the right
 ```
@@ -202,8 +203,8 @@ WHERE name LIKE '%an%';
 
 Retornar tuplas onde a condição for verdadeira:
 ```sql
-SELECT * FROM sales_tb
-WHERE price = 3.99 OR name = '1kg of apples';
+SELECT * FROM sales_tb AS a
+WHERE a.price = 3.99 OR name = '1kg of apples';
 ```
 
 <br>
@@ -212,8 +213,8 @@ WHERE price = 3.99 OR name = '1kg of apples';
 
 Retornar tuplas onde o valor do campo esteja entre os valores informados:
 ```sql
-SELECT * FROM sales_tb
-WHERE price BETWEEN 2.0 AND 3.0;
+SELECT * FROM sales_tb AS a
+WHERE a.price BETWEEN 2.0 AND 3.0;
 ```
 
 <br>
@@ -222,8 +223,8 @@ WHERE price BETWEEN 2.0 AND 3.0;
 
 Retornar se for igual a nulo:
 ```sql
-SELECT * FROM sales_tb
-WHERE price = IS NULL;
+SELECT * FROM sales_tb AS a
+WHERE a.price = IS NULL;
 ```
 
 <br>
@@ -232,7 +233,8 @@ WHERE price = IS NULL;
 
 Deletar onde a condição for verdadeira:
 ```sql
-DELETE FROM sales_tb WHERE id = 1;
+DELETE FROM sales_tb AS a
+WHERE a.id = 1;
 ```
 
 <br>
