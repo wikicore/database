@@ -220,5 +220,76 @@ WHERE benef.emp_cod in ('1', '3');
 ## Criando VIEW e usando as funções TRIM e REPLACE
 
 ```sql
+--cria view VW_AFV_CLIENDERECO
+CREATE
+OR ALTER VIEW VW_AFV_CLIENDERECO(
+    ID_FILIAL,
+    ID_RETAGUARDA,
+    ID_CLIENTE,
+    TIT_COD,
+    ID_CIDADE,
+    CEP,
+    LOGRADOURO,
+    NUMERO,
+    COMPLEMENTO,
+    BAIRRO,
+    UF,
+    LATITUDE,
+    LONGITUDE,
+    REFERENCIA
+) AS
 
+--seleciona as seguintes colunas da tabela cliclientes
+SELECT CAST(cli.EMP_COD AS VARCHAR(2)),
+    CAST (
+        (
+            cli.EMP_COD || '.' || cli.CLI_COD || '.' || cli.TIT_COD
+        ) AS VARCHAR(20)
+    ),
+    CAST(cli.CLI_COD AS VARCHAR(7)),
+    CAST(cli.TIT_COD AS VARCHAR(1)),
+    --TRIM remove espaços em branco ou a string passada por parametro
+    TRIM(setest.IBGE_ID || setcep.IBGE_ID),
+    --TRIM remove os espaços em branco e REPLACE substitui de baseado nos parametros
+    TRIM(REPLACE(cliendereco.CLI_CEP, '-', '')),
+    TRIM(cliendereco.CLI_LOGRA),
+    TRIM(
+        REPLACE(
+            CAST(cliendereco.CLI_NUM AS VARCHAR(10)),
+            '''',
+            ''
+        )
+    ),
+    TRIM(cliendereco.CLI_COMPL),
+    TRIM(cliendereco.CLI_BAI),
+    TRIM(cliendereco.CLI_EST),
+    CAST(cliendereco.CLI_LAT AS VARCHAR(20)),
+    CAST(cliendereco.CLI_LNG AS VARCHAR(20)),
+    REPLACE(TRIM(cliendereco.cli_ref), '''', '')
+FROM cliclientes cli
+
+    --faz um INNER JOIN com a tabela cliclientesend
+    INNER JOIN cliclientesend cliendereco ON(cli.EMP_COD = cliendereco.EMP_COD)
+    AND(cli.CLI_COD = cliendereco.CLI_COD)
+    AND(cli.TIT_COD = cliendereco.TIT_COD)
+
+    --faz um INNER JOIN com a tabela setceplocal
+    INNER JOIN setceplocal setcep ON(
+        setcep.CHAVE_LOCAL = cliendereco.CID_COD
+    )
+
+    --faz um INNER JOIN com a tabela setestados
+    INNER JOIN setestados setest ON(setest.ESTADO = cliendereco.CLI_EST)
+WHERE(cli.CLI_STATUS IN (0, 1, 4))
+    AND (cli.CLI_CGCCPF <> '')
+    AND (cli.CLI_CGCCPF <> ' ')
+    AND (cli.CLI_CGCCPF IS NOT NULL)
+    AND (cliendereco.CID_COD > 0)
+    AND (setest.IBGE_ID || setcep.IBGE_ID <> '')
+    AND (cli.EMP_COD in ('1', '3'))
+
+--ordena a view por EMP_COD, CLI_COD e TIT_COD
+ORDER BY cli.EMP_COD,
+    cli.CLI_COD,
+    cli.TIT_COD;
 ```
