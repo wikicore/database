@@ -3,10 +3,10 @@
 ## Pré-requisitos
 Conhecimentos necessários:
 * SQL
-* Funções
+* Procedimentos e funções
 * SGBD (opcional)
   
-Dica: Alguns códigos podem ser difícil de entender, em um SGBD ou editor de código selecione os parenteses para entender onde começa e termina cada função e etc.
+Dica: Alguns códigos podem ser difícil de entender, em um SGBD ou editor de código selecione os parenteses para entender onde começa e termina cada ```PROCEDURE```, ```FUNCTION``` e etc.
 
 <br>
 

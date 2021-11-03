@@ -1,0 +1,323 @@
+# Criando Triggers no Firebird
+
+## Pré-requisitos
+Conhecimentos necessários:
+* SQL
+* Procedimentos e funções
+* SGBD (opcional)
+  
+Dica: Alguns códigos podem ser difícil de entender, em um SGBD ou editor de código selecione os parenteses para entender onde começa e termina cada ```PROCEDURE```, ```FUNCTION``` e blocos ```BEGIN``` / ```END```.
+
+<br>
+
+## Condicionais
+
+```sql
+SET TERM ^;
+
+--cria ou altera trigger para tabela CLICLIENTESVEN
+CREATE
+OR ALTER TRIGGER CLICLIENTESVEN_SETOR FOR CLICLIENTESVEN
+
+--ativa antes de inserir
+ACTIVE BEFORE INSERT POSITION 0 AS
+
+BEGIN
+
+--verifica a condição
+IF ( 
+        (NEW.SET_COD = '')
+        OR (NEW.SET_COD IS NULL)
+    ) THEN BEGIN NEW.SET_COD = '000';
+END ^
+SET TERM;
+^
+```
+
+<br>
+
+## Deletes, Condicionais, Laços e Exceções
+
+```sql
+SET SQL DIALECT 3;
+SET TERM ^;
+
+--cria ou altera trigger para tabela CLICLIENTES
+CREATE
+OR ALTER TRIGGER CLI_TG_DEL_CLIENTES FOR CLICLIENTES
+
+--ativa depois de deletar
+ACTIVE AFTER DELETE POSITION 32760 AS
+
+--variaveis
+DECLARE VARIABLE iEMP_COD INTEGER;
+
+--verifica a condição
+BEGIN
+IF (
+    (OLD.EMP_COD = 1)
+    AND (CURRENT_USER <> 'REPL')
+) THEN BEGIN
+
+--entra no laço
+FOR
+SELECT EMP_COD
+FROM SETEMPRESAS
+WHERE (EMP_COD NOT IN ('1')) INTO :iEMP_COD DO BEGIN
+
+--deleta da tabela
+DELETE FROM CLICLIENTES
+WHERE (EMP_COD = :iEMP_COD)
+    AND (CLI_COD = OLD.CLI_COD);
+END
+END 
+
+--se verdadeiro chama a exceção
+IF (
+    (OLD.EMP_COD <> 1)
+    AND (CURRENT_USER <> 'REPL')
+    AND (CURRENT_USER <> 'REPLICA')
+) THEN BEGIN EXCEPTION CLICLIENTE_EMP_ERRADA;
+END
+END ^
+SET TERM;
+^
+```
+
+<br>
+
+## Insertes, Condicionais e Laços
+
+```sql
+SET SQL DIALECT 3;
+SET TERM ^;
+
+--cria ou altera trigger para tabela CLIGRUPOCLI
+CREATE
+OR ALTER TRIGGER CLI_TG_INS_CLIGRUPO FOR CLIGRUPOCLI
+
+--ativa depois de inserir
+ACTIVE AFTER INSERT POSITION 32760 AS
+
+--variaveis
+DECLARE VARIABLE iEMP_COD INTEGER;
+
+--verifica a condição
+BEGIN
+IF (
+    (NEW.EMP_COD = 1)
+    AND (CURRENT_USER <> 'REPL')
+) THEN BEGIN
+
+--entra no laço
+FOR
+SELECT EMP_COD
+FROM CLIGRUPOCLI
+WHERE (EMP_COD NOT IN ('1')) INTO :iEMP_COD DO BEGIN
+
+--insire os valores
+INSERT INTO CLIGRUPOCLI (
+        EMP_COD,
+        GRUPO_CLI,
+        GRUPO_DESC,
+        GRUPO_COMIS,
+        LIMITECRED,
+        DAT_CAD,
+        DAT_ALT,
+        USUARIO
+    )
+VALUES (
+        :iEMP_COD,
+        NEW.GRUPO_CLI,
+        NEW.GRUPO_DESC,
+        NEW.GRUPO_COMIS,
+        NEW.LIMITECRED,
+        NEW.DAT_CAD,
+        NEW.DAT_ALT,
+        NEW.USUARIO
+    );
+END
+END
+END ^
+SET TERM;
+^
+```
+
+<br>
+
+## Atualizações e Condicionais
+
+```sql
+SET SQL DIALECT 3;
+SET TERM ^;
+
+--cria ou altera trigger na tabela CLIVENDEDORESVERBA
+CREATE
+OR ALTER TRIGGER CLI_TG_UP_ALT_SALVERBAVEN FOR CLIVENDEDORESVERBA
+
+--ativa depois de atualizar
+ACTIVE AFTER UPDATE POSITION 0 AS BEGIN
+
+--verfica a condição
+IF (
+    (CURRENT_USER <> 'REPL')
+    AND (NEW.VENVERBA_VALOR IS NOT NULL)
+) THEN BEGIN
+
+--então atualiza o campo
+UPDATE CLIVENDEDORES
+SET
+    CLIVENDEDORES.SALDOVERBA = IIF (
+        NEW.VENVERBA_DC = 'C',
+        (
+            (
+                COALESCE(CLIVENDEDORES.SALDOVERBA, 0) - (OLD.VENVERBA_VALOR)
+            ) + NEW.VENVERBA_VALOR
+        ),
+        (
+            (
+                COALESCE(CLIVENDEDORES.SALDOVERBA, 0) + (OLD.VENVERBA_VALOR)
+            ) - NEW.VENVERBA_VALOR
+        )
+    )
+WHERE (CLIVENDEDORES.EMP_COD = NEW.EMP_COD)
+    AND (CLIVENDEDORES.VEN_COD = NEW.VEN_COD);
+END
+END ^
+SET TERM;
+^
+```
+
+<br>
+
+## Atualizações, Condicionais e Laços
+
+```sql
+SET SQL DIALECT 3;
+SET TERM ^;
+
+--cria ou altera trigger para tabela CLIVENDEDORES
+CREATE
+OR ALTER TRIGGER CLI_TG_UP_ALT_SUPERVISOR FOR CLIVENDEDORES
+
+--ativa depois de atualizar
+ACTIVE AFTER UPDATE POSITION 0 AS
+
+--variaveis
+DECLARE VARIABLE iMETA_COD INTEGER;
+
+BEGIN
+
+--verifica a condição
+IF (
+    (NEW.SUPERVISOR <> OLD.SUPERVISOR)
+    AND (CURRENT_USER <> 'REPL')
+) THEN BEGIN
+
+--entra no laço
+FOR
+SELECT DISTINCT Setmetashead.META_COD
+FROM SETMETASHEAD Setmetashead
+    LEFT OUTER JOIN SETMETASDETAIL Setmetasdetail2
+    ON(Setmetashead.EMP_COD = Setmetasdetail2.EMP_COD)
+    AND(
+        Setmetashead.META_COD = Setmetasdetail2.META_COD
+    )
+WHERE(Setmetashead.EMP_COD = NEW.EMP_COD)
+    AND(Setmetashead.META_STATUS = 1)
+    AND(Setmetasdetail2.VEN_COD = NEW.VEN_COD) INTO iMETA_COD DO BEGIN
+
+--atualiza tabela SETMETASDETAIL
+UPDATE SETMETASDETAIL SETMETASDETAIL
+SET SETMETASDETAIL.SUPERVISOR = NEW.SUPERVISOR
+WHERE (SETMETASDETAIL.EMP_COD = NEW.EMP_COD)
+    AND (SETMETASDETAIL.VEN_COD = NEW.VEN_COD)
+    AND (SETMETASDETAIL.META_COD IN (:iMETA_COD));
+END
+
+--atualiza tabela PRONFSAIDA
+UPDATE PRONFSAIDA
+SET SUPERVISOR = NEW.SUPERVISOR
+WHERE (EMP_COD = NEW.EMP_COD)
+    AND (VEN_COD1 = NEW.VEN_COD);
+
+--atualiza tabela PRONFENTRADA
+UPDATE PRONFENTRADA
+SET SUPERVISOR = NEW.SUPERVISOR
+WHERE (EMP_COD = NEW.EMP_COD)
+    AND (VEN_COD1 = NEW.VEN_COD);
+
+--atualiza tabela FINDOCRECEBER
+UPDATE FINDOCRECEBER
+SET SUPERVISOR = NEW.SUPERVISOR
+WHERE (EMP_COD = NEW.EMP_COD)
+    AND (VEN_COD1 = NEW.VEN_COD);
+
+--atualiza tabela VENPEDIDOS
+UPDATE VENPEDIDOS
+SET SUPERVISOR = NEW.SUPERVISOR
+WHERE (EMP_COD = NEW.EMP_COD)
+    AND (VEN_COD1 = NEW.VEN_COD)
+    AND (PED_STATUS NOT IN('F', 'C'));
+END
+END ^
+SET TERM;
+^
+```
+
+<br>
+
+## Deletes, Condicionais, Funções e Exceções
+
+```sql
+SET SQL DIALECT 3;
+SET TERM ^;
+
+--cria ou altera triggar na tabela CLICLIENTES
+CREATE
+OR ALTER TRIGGER CLI_TG_UP_DEL_CLIENTE FOR CLICLIENTES
+
+--ativa antes de deletar
+ACTIVE BEFORE DELETE POSITION 0 AS
+
+--variaveis
+DECLARE VARIABLE ICOUNT INTEGER;
+
+BEGIN
+
+--seleciona de VENPEDIDOS
+SELECT COUNT(CLI_COD)
+FROM VENPEDIDOS
+WHERE (VENPEDIDOS.EMP_COD = OLD.EMP_COD)
+    AND (VENPEDIDOS.CLI_COD = OLD.CLI_COD) INTO :ICOUNT;
+
+--verifica condição
+IF (ICOUNT > 0) THEN
+BEGIN EXCEPTION CLI_CLIENTE_NO_DELETE;
+END
+
+--seleciona de FINDOCRECEBER
+SELECT COUNT(CLI_COD)
+FROM FINDOCRECEBER
+WHERE (FINDOCRECEBER.EMP_COD = OLD.EMP_COD)
+    AND (FINDOCRECEBER.CLI_COD = OLD.CLI_COD)
+    AND (FINDOCRECEBER.BAIXA IS NULL) INTO :ICOUNT;
+
+--verifica condição
+IF (ICOUNT > 0) THEN
+BEGIN EXCEPTION CLI_CLIENTE_NO_DELETE;
+END
+
+--deleta de SETMETASDETAIL
+DELETE FROM SETMETASDETAIL
+WHERE (SETMETASDETAIL.EMP_COD = OLD.EMP_COD)
+    AND (SETMETASDETAIL.CLI_COD = OLD.CLI_COD);
+
+--deleta de VENAPONTAESTOQUE
+DELETE FROM VENAPONTAESTOQUE
+WHERE (VENAPONTAESTOQUE.EMP_COD = OLD.EMP_COD)
+    AND (VENAPONTAESTOQUE.CLI_COD = OLD.CLI_COD);
+END ^
+SET TERM;
+^
+```
